@@ -10,6 +10,7 @@ import {
 	FaInstagram,
 } from "react-icons/fa";
 import { ModalPost } from "../Post/Modal";
+import { API_URL } from "@/app/config";
 
 export default function SidebarLeft() {
 	return (
@@ -43,11 +44,20 @@ export default function SidebarLeft() {
 				</Link>
 				<button
 					onClick={() => {
-						// Hapus token autentikasi jika ada
-						localStorage.removeItem("token");
-						localStorage.removeItem("user");
+						fetch(`${API_URL}/api/logout`, {
+							method: "POST",
+							headers: {
+								Authorization: `Bearer ${localStorage.getItem(
+									"token"
+								)}`,
+							},
+						}).then(() => {
+							// Hapus data pengguna dari localStorage
+							localStorage.removeItem("token");
+							localStorage.removeItem("user");
+							window.location.href = "/auth/login";
+						});
 						// Redirect ke halaman login
-						window.location.href = "/auth/login";
 					}}
 					className="flex items-center gap-3 hover:font-semibold text-left bg-transparent border-none p-0 cursor-pointer"
 				>
