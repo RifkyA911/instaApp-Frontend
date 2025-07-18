@@ -1,36 +1,152 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📸 InstaApp Frontend (Next.js 15 + ShadCN + Tailwind)
 
-## Getting Started
+Frontend application for **InstaApp** built with **Next.js 15**, **Turbopack**, **ShadCN**, and **NextAuth**.  
+Features: **authentication**, **CRUD Posts (caption + image)**, **like**, **comment**, and **update posts with image**.
 
-First, run the development server:
+---
+
+## 🚀 Tech Stack
+
+-   [Next.js 15](https://nextjs.org/) + Turbopack ⚡
+-   [TypeScript](https://www.typescriptlang.org/)
+-   [ShadCN/UI](https://ui.shadcn.com/) for UI components
+-   [Tailwind CSS](https://tailwindcss.com/)
+-   [React Hook Form](https://react-hook-form.com/) + Controller for file input
+-   [Lucide Icons](https://lucide.dev/) & React Icons
+-   [Laravel Sanctum](https://laravel.com/docs/11.x/sanctum) for backend auth
+-   [Axios](https://axios-http.com/) for HTTP requests
+-   [Bun](https://bun.sh/) as package manager & runtime
+
+---
+
+## 📦 Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+git clone https://github.com/username/instaApp-Frontend.git
+cd instaApp-Frontend
+bun install
+```
+
+Create `.env.local` file:
+
+```env
+NEXT_PUBLIC_BASE_API_URL=http://127.0.0.1:8000
+```
+
+---
+
+## 🛠️ Development
+
+Run development server:
+
+```bash
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔑 Authentication
 
-## Learn More
+-   Login and register via **Laravel Sanctum**.
+-   User token is stored in `localStorage`:
 
-To learn more about Next.js, take a look at the following resources:
+    ```ts
+    const token =
+    	typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    ```
 
--   [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
--   [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+-   Middleware checks token & user, redirects to `/auth/login` if not authenticated.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🖼️ Posts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Create / Update Post
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+-   Input **caption** & upload **image** with preview:
+
+    ```tsx
+    <Controller
+      name="image"
+      control={control}
+      render={({ field: { onChange, value } }) => (
+        value && value[0] instanceof File
+          ? <Image src={URL.createObjectURL(value[0])} ... />
+          : typeof value === "string"
+          ? <Image src={value} ... />
+          : null
+      )}
+    />
+    ```
+
+-   Update post uses **`_method=PUT`** because Laravel doesn't parse `multipart/form-data` with `PUT`:
+
+    ```ts
+    const formData = new FormData();
+    formData.append("_method", "PUT");
+    formData.append("caption", caption);
+    formData.append("image", image[0]);
+
+    await axios.post(`${API_URL}/api/posts/${postId}`, formData, {
+    	headers: { Authorization: `Bearer ${token}` },
+    });
+    ```
+
+### Like / Unlike
+
+```ts
+await axios.post(`${API_URL}/api/posts/${postId}/likes`, {}, { headers });
+await axios.delete(`${API_URL}/api/posts/${postId}/likes/${likeId}`, {
+	headers,
+});
+```
+
+### Comment
+
+-   **Add**, **Update**, **Cancel** comments managed via `posts[]` state.
+-   `toggleCommentInput` & `handleCommentSubmit` handle show/hide input & sending comments.
+
+---
+
+## ⚙️ next.config.js
+
+Allow `127.0.0.1` for `next/image`:
+
+```js
+images: {
+  remotePatterns: [
+    {
+      protocol: "http",
+      hostname: "127.0.0.1",
+      pathname: "/api/image/posts/**",
+    },
+  ],
+},
+```
+
+---
+
+## 🐞 Troubleshooting
+
+-   **`localStorage is not defined`**  
+    Wrap with `typeof window !== "undefined"` to avoid server-side errors.
+-   **Update post caption not received**  
+    Use `_method=PUT` with `POST` when sending `FormData`.
+-   **ShadCN modal auto-closing on child click**  
+    Use `e.stopPropagation()` in trigger or `asChild` prop.
+
+---
+
+## 📌 TODO
+
+-   [ ] Optimize posts state to avoid refetching after like/comment.
+-   [ ] Implement delete post & remove old files on backend.
+-   [ ] Add loading indicators & skeleton UI.
+
+---
+
+### License
+
+MIT
