@@ -128,6 +128,13 @@ images: {
 
 ---
 
+## 📷 Screenshoots
+
+![register](/images/1.png)
+![login](/images/2.png)
+![home](/images/3.png)
+![home-detail](/images/4.png)
+
 ## 🐞 Troubleshooting
 
 -   **`localStorage is not defined`**  
