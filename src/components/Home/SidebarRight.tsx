@@ -16,7 +16,7 @@ export default function SidebarRight() {
 
 	return (
 		<aside className="fixed top-0 right-0 h-full w-[320px] border-l bg-white px-6 pt-8">
-			<div className="flex flex-col gap-6 mt-16">
+			<div className="flex flex-col gap-6 mt-4">
 				{/* User Info */}
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
