@@ -25,11 +25,13 @@ import { useRouter } from "next/navigation";
 interface ModalPostProps {
 	type: "create" | "update";
 	post: Post | null;
+	onClose?: () => void; // Optional callback for closing the modal
 }
 
 export const ModalPost: React.FC<ModalPostProps> = ({
 	type = "create",
 	post,
+	onClose,
 }) => {
 	const router = useRouter();
 	const uploadRef = useRef<HTMLInputElement>(null);
@@ -48,13 +50,18 @@ export const ModalPost: React.FC<ModalPostProps> = ({
 			formDataWithImage.append("image", formData.image[0]);
 		}
 
-		const response = await fetch(`${API_URL}/api/posts`, {
-			method: type === "update" ? "PUT" : "POST",
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-			},
-			body: formDataWithImage,
-		});
+		const response = await fetch(
+			type === "update"
+				? `${API_URL}/api/posts/${post?.id}`
+				: `${API_URL}/api/posts`,
+			{
+				method: type === "update" ? "PUT" : "POST",
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+				body: formDataWithImage,
+			}
+		);
 
 		if (response.ok) {
 			toast.success("Post created successfully!");
@@ -69,11 +76,17 @@ export const ModalPost: React.FC<ModalPostProps> = ({
 	return (
 		<Dialog>
 			<DialogTrigger>
-				<div className="flex items-center gap-3 hover:font-semibold cursor-pointer">
-					<FaPlusSquare />
-					{type == "update" ? "Update" : "Create"}
+				<div className="flex items-center gap-3 hover:font-semibold cursor-pointer w-full">
+					{type == "create" ? (
+						<>
+							<FaPlusSquare /> Create Post
+						</>
+					) : (
+						<span className="w-full">Update</span>
+					)}
 				</div>
 			</DialogTrigger>
+			{/* )} */}
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>
@@ -99,9 +112,16 @@ export const ModalPost: React.FC<ModalPostProps> = ({
 									{value ? (
 										<div className="flex flex-col items-center gap-2">
 											<Image
-												src={URL.createObjectURL(
-													value[0] as any
-												)}
+												src={
+													value
+														? URL.createObjectURL(
+																value[0] as any
+														  )
+														: typeof value ===
+														  "string"
+														? value // kalau dari defaultValues berupa string URL
+														: ""
+												}
 												width={200}
 												height={200}
 												alt=""
