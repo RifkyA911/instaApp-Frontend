@@ -7,11 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { API_URL } from "./config";
 import { useRouter } from "next/navigation";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +27,8 @@ import { Post } from "./interface/Post";
 import { toast } from "sonner";
 import SidebarRight from "@/components/Home/SidebarRight";
 import SidebarLeft from "@/components/Home/SidebarLeft";
+import { Comment } from "./interface/Comment";
+import { ModalPost } from "@/components/Post/Modal";
 
 export default function HomePage() {
 	const router = useRouter();
@@ -114,6 +111,33 @@ export default function HomePage() {
 		} catch (error) {
 			console.error("Error saat like:", error);
 		}
+	};
+
+	const handleDeletePost = (postId: number) => {
+		if (!confirm("Apakah Anda yakin ingin menghapus postingan ini?")) {
+			return;
+		}
+
+		fetch(`${API_URL}/api/posts/${postId}`, {
+			method: "DELETE",
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		})
+			.then((res) => {
+				if (!res.ok) {
+					throw new Error("Gagal menghapus postingan");
+				}
+				return res.json();
+			})
+			.then(() => {
+				toast.success("Postingan berhasil dihapus");
+				setPosts((prev) => prev.filter((post) => post.id !== postId));
+			})
+			.catch((error) => {
+				console.error("Error saat menghapus postingan:", error);
+				toast.error("Gagal menghapus postingan");
+			});
 	};
 
 	const toggleCommentInput = (
@@ -338,7 +362,7 @@ export default function HomePage() {
 				{loading ? (
 					<p>Loading...</p>
 				) : posts.length === 0 ? (
-					<p>Tidak ada postingan.</p>
+					<p>Belum ada postingan.</p>
 				) : (
 					posts.map((post) => (
 						<Card key={post.id} className="mb-6">
@@ -361,52 +385,54 @@ export default function HomePage() {
 											@{post.user.name.toLowerCase()}
 										</span>
 									</div>
-									<div className="flex items-center gap-2">
-										<DropdownMenu>
-											<DropdownMenuTrigger asChild>
-												<Button variant="ghost">
-													<BsThreeDotsVertical />
-												</Button>
-											</DropdownMenuTrigger>
-											<DropdownMenuContent
-												className="w-56"
-												align="start"
-											>
-												<DropdownMenuLabel>
-													My Account
-												</DropdownMenuLabel>
-												<DropdownMenuGroup>
-													<DropdownMenuItem
-													// onClick={() =>
-													// 	toggleCommentInput(
-													// 		post.id,
-													// 		"update",
-													// 	)
-													// }
-													>
-														Edit
-														<DropdownMenuShortcut>
-															<FaPen />
-														</DropdownMenuShortcut>
-													</DropdownMenuItem>
-													<DropdownMenuItem
-													// onClick={() =>
-													// 	handleDeleteComment(
-													// 		post,
-													// 		comment
-													// 	)
-													// }
-													>
-														Hapus
-														<DropdownMenuShortcut>
-															<FaRegTrashAlt />
-														</DropdownMenuShortcut>
-													</DropdownMenuItem>
-												</DropdownMenuGroup>
-												<DropdownMenuSeparator />
-											</DropdownMenuContent>
-										</DropdownMenu>
-									</div>
+									{post.user.id === thisUser?.id && (
+										<div className="flex items-center gap-2">
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button variant="ghost">
+														<BsThreeDotsVertical />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent
+													className="w-56"
+													align="start"
+												>
+													<DropdownMenuLabel>
+														My Post
+													</DropdownMenuLabel>
+													<DropdownMenuGroup>
+														{/* <DropdownMenuItem
+															// asChild
+															onSelect={(e) =>
+																e.preventDefault()
+															}
+														>
+															<ModalPost
+																type="update"
+																post={post}
+															/>
+															<DropdownMenuShortcut>
+																<FaPen />
+															</DropdownMenuShortcut>
+														</DropdownMenuItem> */}
+														<DropdownMenuItem
+															onClick={() =>
+																handleDeletePost(
+																	post.id
+																)
+															}
+														>
+															Hapus
+															<DropdownMenuShortcut>
+																<FaRegTrashAlt />
+															</DropdownMenuShortcut>
+														</DropdownMenuItem>
+													</DropdownMenuGroup>
+													<DropdownMenuSeparator />
+												</DropdownMenuContent>
+											</DropdownMenu>
+										</div>
+									)}
 								</div>
 
 								{/* Gambar */}
